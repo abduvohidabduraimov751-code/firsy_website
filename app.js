@@ -1,47 +1,5 @@
 /* Nasiya Daftari - Main Application Logic */
 
-// Default Demo Data for First Launch
-const DEMO_CUSTOMERS = [
-  {
-    id: "c_1",
-    name: "Jasur Rahimov",
-    phone: "+998 90 123 45 67",
-    debtAmount: 2500000,
-    paidAmount: 500000,
-    startDate: "2026-07-15",
-    dueDate: "2026-08-01", // Overdue relative to current date (2026-08-06)
-    note: "Televizor LG 43 dyuym uchun",
-    payments: [
-      { id: "p_1", amount: 500000, date: "2026-07-25", note: "Naqd to'ladi" }
-    ]
-  },
-  {
-    id: "c_2",
-    name: "Alisher Qodirov",
-    phone: "+998 91 234 56 78",
-    debtAmount: 1200000,
-    paidAmount: 0,
-    startDate: "2026-08-01",
-    dueDate: "2026-08-15", // Active upcoming
-    note: "Oziq-ovqat va ro me'yoriy mahsulotlar",
-    payments: []
-  },
-  {
-    id: "c_3",
-    name: "Malika Sobirova",
-    phone: "+998 93 345 67 89",
-    debtAmount: 800000,
-    paidAmount: 800000,
-    startDate: "2026-06-10",
-    dueDate: "2026-07-10",
-    note: "Kiyim-kechak uchun",
-    payments: [
-      { id: "p_2", amount: 400000, date: "2026-06-25", note: "Plastik karta" },
-      { id: "p_3", amount: 400000, date: "2026-07-05", note: "Naqd to'liq yopdi" }
-    ]
-  }
-];
-
 class NasiyaApp {
   constructor() {
     this.customers = this.loadCustomers();
@@ -59,8 +17,7 @@ class NasiyaApp {
   loadCustomers() {
     const saved = localStorage.getItem('nasiya_customers_v2');
     if (!saved) {
-      localStorage.setItem('nasiya_customers_v2', JSON.stringify(DEMO_CUSTOMERS));
-      return DEMO_CUSTOMERS;
+      return [];
     }
     try {
       return JSON.parse(saved);
