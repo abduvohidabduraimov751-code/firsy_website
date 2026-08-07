@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nasiya Daftari — Shaxsiy Qarz Hisobi</title>
+  <meta name="theme-color" content="#0f172a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Nasiya Daftari">
+  <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3532/3532138.png">
+  <link rel="manifest" href="manifest.json">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+  <div class="container">
+    <!-- Header -->
+    <header>
+      <div class="brand">
+        <div class="brand-icon">📖</div>
+        <div>
+          <h1>Nasiya Daftari</h1>
+          <p>Shaxsiy qarzlar va hisob-kitoblar</p>
+        </div>
+      </div>
+      <button class="theme-toggle-btn" id="themeToggleBtn" title="Mavzuni o'zgartirish">🌙</button>
+    </header>
+
+    <!-- Urgent Overdue Alert Banner -->
+    <div class="alert-banner" id="overdueAlertBanner" style="display: none;">
+      <div class="alert-content">
+        <span class="alert-icon">🚨</span>
+        <span id="overdueAlertText">Diqqat! Sizda 0 ta muddati o'tgan qarz bor!</span>
+      </div>
+      <button class="alert-btn" id="filterOverdueBtn">Ko'rish</button>
+    </div>
+
+    <!-- Financial KPI Summary Cards -->
+    <div class="stats-grid">
+      <div class="stat-card total">
+        <div class="stat-title">Jami Berilgan Nasiya</div>
+        <div class="stat-value" id="statTotalDebt">0 so'm</div>
+      </div>
+      <div class="stat-card paid">
+        <div class="stat-title">Jami Qaytarilgan (To'langan)</div>
+        <div class="stat-value" id="statTotalPaid">0 so'm</div>
+      </div>
+      <div class="stat-card remaining">
+        <div class="stat-title">Jami Qolgan Qarz</div>
+        <div class="stat-value" id="statTotalRemaining">0 so'm</div>
+      </div>
+      <div class="stat-card count">
+        <div class="stat-title">Mijozlar Soni</div>
+        <div class="stat-value" id="statCustomerCount">0 ta</div>
+      </div>
+    </div>
+
+    <!-- Controls Bar -->
+    <div class="controls-bar">
+      <div class="search-box">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="searchInput" placeholder="Ism yoki telefon raqami bo'yicha qidirish...">
+      </div>
+
+      <div class="filter-group">
+        <button class="filter-chip active" data-filter="all">Barchasi</button>
+        <button class="filter-chip" data-filter="overdue">Muddati o'tgan 🚨</button>
+        <button class="filter-chip" data-filter="unpaid">To'lanmagan 🔴</button>
+        <button class="filter-chip" data-filter="partial">Qisman 🟡</button>
+        <button class="filter-chip" data-filter="paid">To'liq to'langan 🟢</button>
+      </div>
+
+      <div class="action-buttons">
+        <button class="btn btn-secondary" id="exportCsvBtn" title="Excel / CSV eksport">📥 CSV</button>
+        <button class="btn btn-secondary" id="backupJsonBtn" title="Ma'lumotlarni JSON faylga saqlash">💾 Zaxira</button>
+        <button class="btn btn-secondary" id="restoreJsonBtn" title="JSON fayldan tiklash">📤 Tiklash</button>
+        <input type="file" id="restoreFileInput" accept=".json" style="display: none;">
+        <button class="btn btn-primary" id="openAddModalBtn">+ Yangi Qarz</button>
+      </div>
+    </div>
+
+    <!-- Customer Cards Grid -->
+    <div class="customer-grid" id="customerGrid">
+      <!-- Dynamic Customer Cards Rendered Here -->
+    </div>
+  </div>
+
+  <!-- Mobile Floating Action Button -->
+  <button class="fab" id="fabAddBtn" title="Yangi Qarz Qo'shish">+</button>
+
+  <!-- Add/Edit Customer Modal -->
+  <div class="modal-backdrop" id="customerModalBackdrop">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="modalTitle">Yangi Qarz Yozish</h2>
+        <button class="close-btn" id="closeCustomerModalBtn">&times;</button>
+      </div>
+      <form id="customerForm">
+        <input type="hidden" id="customerId">
+        
+        <div class="form-group">
+          <label for="inputName">F.I.Sh (Mijoz Ismi) *</label>
+          <input type="text" id="inputName" class="form-control" placeholder="Masalan: Jasur Rahimov" required>
+        </div>
+
+        <div class="form-group">
+          <label for="inputPhone">Telefon Raqami *</label>
+          <input type="tel" id="inputPhone" class="form-control" placeholder="+998 90 123 45 67" value="+998 " required>
+        </div>
+
+        <div class="form-group">
+          <label for="inputDebt">Qarz Summasi (so'mda) *</label>
+          <input type="number" id="inputDebt" class="form-control" placeholder="Masalan: 1500000" min="1000" required>
+        </div>
+
+        <div class="form-group">
+          <label for="inputStartDate">Qarz Berilgan Sana *</label>
+          <input type="date" id="inputStartDate" class="form-control" required>
+        </div>
+
+        <div class="form-group">
+          <label for="inputDueDate">Qaytarish Muddati (Olgan kuni) *</label>
+          <input type="date" id="inputDueDate" class="form-control" required>
+        </div>
+
+        <div class="form-group">
+          <label for="inputNote">Izoh (Nima uchun berilgan)</label>
+          <input type="text" id="inputNote" class="form-control" placeholder="Masalan: Televizor uchun, oziq-ovqat...">
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="cancelCustomerModalBtn">Bekor qilish</button>
+          <button type="submit" class="btn btn-primary">Saqlash</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Payment Modal -->
+  <div class="modal-backdrop" id="paymentModalBackdrop">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>To'lov Qo'shish</h2>
+        <button class="close-btn" id="closePaymentModalBtn">&times;</button>
+      </div>
+      <div id="paymentCustomerDetails" style="margin-bottom: 16px; font-size: 0.9rem;">
+        <!-- Details injected via JS -->
+      </div>
+      <form id="paymentForm">
+        <input type="hidden" id="paymentCustomerId">
+        
+        <div class="form-group">
+          <label for="paymentAmount">To'langan Summa (so'mda) *</label>
+          <input type="number" id="paymentAmount" class="form-control" placeholder="Masalan: 500000" required>
+        </div>
+
+        <div class="form-group">
+          <label for="paymentDate">To'lov Sanasi *</label>
+          <input type="date" id="paymentDate" class="form-control" required>
+        </div>
+
+        <div class="form-group">
+          <label for="paymentNote">Izoh (ixtiyoriy)</label>
+          <input type="text" id="paymentNote" class="form-control" placeholder="Masalan: Plastik kartadan o'tkazdi">
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="cancelPaymentModalBtn">Bekor qilish</button>
+          <button type="submit" class="btn btn-success">To'lovni Saqlash</button>
+        </div>
+      </form>
+
+      <!-- Payment History List -->
+      <h3 style="font-size: 1rem; margin-top: 20px; margin-bottom: 10px;">To'lovlar Tarixi</h3>
+      <div class="history-list" id="paymentHistoryList">
+        <!-- History items injected via JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div class="modal-backdrop" id="deleteModalBackdrop">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>O'chirishni Tasdiqlang</h2>
+        <button class="close-btn" id="closeDeleteModalBtn">&times;</button>
+      </div>
+      <p style="margin-bottom: 20px;" id="deleteConfirmText">Rostdan ham ushbu mijoz qarzini o'chirmoqchimisiz?</p>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="cancelDeleteBtn">Bekor qilish</button>
+        <button class="btn btn-danger" id="confirmDeleteBtn">Ha, o'chirilsin</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notifications Container -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <!-- JavaScript App Logic -->
+  <script src="js/app.js"></script>
+</body>
+</html>
