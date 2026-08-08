@@ -1,8 +1,8 @@
-/* Nasiya Daftari - Main Application Logic */
+/* Nasiya Daftari - Main Application Logic (Firebase Firestore bilan) */
 
 class NasiyaApp {
   constructor() {
-    this.customers = this.loadCustomers();
+    this.customers = [];
     this.activeFilter = 'all';
     this.searchQuery = '';
     this.editingCustomerId = null;
@@ -11,24 +11,19 @@ class NasiyaApp {
 
     this.initElements();
     this.initEventListeners();
-    this.render();
+    this.initFirestoreListener();
   }
 
-  loadCustomers() {
-    const saved = localStorage.getItem('nasiya_customers_v2');
-    if (!saved) {
-      return [];
-    }
-    try {
-      return JSON.parse(saved);
-    } catch (e) {
-      return [];
-    }
-  }
-
-  saveCustomers() {
-    localStorage.setItem('nasiya_customers_v2', JSON.stringify(this.customers));
-    this.render();
+  // Firestore bilan real vaqtda sinxronlash
+  initFirestoreListener() {
+    db.collection('customers').orderBy('createdAt', 'desc')
+      .onSnapshot((snapshot) => {
+        this.customers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        this.render();
+      }, (error) => {
+        console.error('Firestore xatolik:', error);
+        this.showToast("Ma'lumotlarni yuklashda xatolik yuz berdi. Internetni tekshiring!", 'error');
+      });
   }
 
   initElements() {
@@ -161,11 +156,16 @@ class NasiyaApp {
     // Confirm Delete
     this.confirmDeleteBtn.addEventListener('click', () => {
       if (this.deletingCustomerId) {
-        this.customers = this.customers.filter(c => c.id !== this.deletingCustomerId);
-        this.saveCustomers();
-        this.closeModal(this.deleteModal);
-        this.showToast("Qarz yozuvi o'chirildi", 'info');
-        this.deletingCustomerId = null;
+        db.collection('customers').doc(this.deletingCustomerId).delete()
+          .then(() => {
+            this.closeModal(this.deleteModal);
+            this.showToast("Qarz yozuvi o'chirildi", 'info');
+            this.deletingCustomerId = null;
+          })
+          .catch((err) => {
+            console.error(err);
+            this.showToast("O'chirishda xatolik yuz berdi!", 'error');
+          });
       }
     });
 
@@ -356,23 +356,18 @@ class NasiyaApp {
 
     if (id) {
       // Edit existing
-      const index = this.customers.findIndex(c => c.id === id);
-      if (index !== -1) {
-        this.customers[index] = {
-          ...this.customers[index],
-          name,
-          phone,
-          debtAmount,
-          startDate,
-          dueDate,
-          note
-        };
+      db.collection('customers').doc(id).update({
+        name, phone, debtAmount, startDate, dueDate, note
+      }).then(() => {
         this.showToast("Mijoz qarzi yangilandi! ✨", 'success');
-      }
+        this.closeModal(this.customerModal);
+      }).catch((err) => {
+        console.error(err);
+        this.showToast("Yangilashda xatolik yuz berdi!", 'error');
+      });
     } else {
       // Create new
-      const newCustomer = {
-        id: 'c_' + Date.now(),
+      db.collection('customers').add({
         name,
         phone,
         debtAmount,
@@ -380,14 +375,16 @@ class NasiyaApp {
         startDate,
         dueDate,
         note,
-        payments: []
-      };
-      this.customers.unshift(newCustomer);
-      this.showToast("Yangi qarz yozuvi yaratildi! 📝", 'success');
+        payments: [],
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      }).then(() => {
+        this.showToast("Yangi qarz yozuvi yaratildi! 📝", 'success');
+        this.closeModal(this.customerModal);
+      }).catch((err) => {
+        console.error(err);
+        this.showToast("Saqlashda xatolik yuz berdi!", 'error');
+      });
     }
-
-    this.saveCustomers();
-    this.closeModal(this.customerModal);
   }
 
   openEditCustomerModal(customer) {
@@ -470,13 +467,16 @@ class NasiyaApp {
       note
     };
 
-    customer.payments = customer.payments || [];
-    customer.payments.unshift(newPayment);
-    customer.paidAmount += amount;
-
-    this.saveCustomers();
-    this.showToast(`${this.formatMoney(amount)} to'lov kiritildi! 💵`, 'success');
-    this.closeModal(this.paymentModal);
+    db.collection('customers').doc(customer.id).update({
+      payments: firebase.firestore.FieldValue.arrayUnion(newPayment),
+      paidAmount: firebase.firestore.FieldValue.increment(amount)
+    }).then(() => {
+      this.showToast(`${this.formatMoney(amount)} to'lov kiritildi! 💵`, 'success');
+      this.closeModal(this.paymentModal);
+    }).catch((err) => {
+      console.error(err);
+      this.showToast("To'lovni saqlashda xatolik yuz berdi!", 'error');
+    });
   }
 
   openDeleteModal(customer) {
@@ -549,7 +549,7 @@ class NasiyaApp {
 
     const dataObj = {
       app: "NasiyaDaftari",
-      version: "2.0",
+      version: "3.0-firebase",
       exportedAt: new Date().toISOString(),
       customers: this.customers
     };
@@ -589,9 +589,23 @@ class NasiyaApp {
           return;
         }
 
-        this.customers = importedCustomers;
-        this.saveCustomers();
-        this.showToast(`${importedCustomers.length} ta nasiya yozuvi tiklandi! 📥`, 'success');
+        // Har bir mijozni Firestore'ga alohida qo'shamiz
+        const batch = db.batch();
+        importedCustomers.forEach(c => {
+          const docRef = db.collection('customers').doc();
+          const { id, ...data } = c;
+          batch.set(docRef, {
+            ...data,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+        });
+
+        batch.commit().then(() => {
+          this.showToast(`${importedCustomers.length} ta nasiya yozuvi tiklandi! 📥`, 'success');
+        }).catch((err) => {
+          console.error(err);
+          this.showToast("Tiklashda xatolik yuz berdi!", 'error');
+        });
       } catch (err) {
         this.showToast("JSON faylni o'qishda xatolik yuz berdi!", 'error');
       } finally {
