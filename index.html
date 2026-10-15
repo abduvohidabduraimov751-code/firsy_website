@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Nasiya Daftari — Shaxsiy Qarz Hisobi</title>
-  <meta name="theme-color" content="#0f172a">
+  <meta name="theme-color" content="#7000ff">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Nasiya Daftari">
@@ -113,7 +113,7 @@
 
         <div class="form-group">
           <label for="inputPhone">Telefon Raqami *</label>
-          <input type="tel" id="inputPhone" class="form-control" placeholder="+998 90 123 45 67" value="+998 " required>
+          <input type="tel" id="inputPhone" class="form-control" placeholder="+998 90 123 45 67" value="+998 " pattern="(?:\D*\d){12,}" title="Telefon raqamini to'liq kiriting: +998 90 123 45 67" required>
         </div>
 
         <div class="form-group">
@@ -159,7 +159,7 @@
         
         <div class="form-group">
           <label for="paymentAmount">To'langan Summa (so'mda) *</label>
-          <input type="number" id="paymentAmount" class="form-control" placeholder="Masalan: 500000" required>
+          <input type="number" id="paymentAmount" class="form-control" placeholder="Masalan: 500000" min="1" required>
         </div>
 
         <div class="form-group">
@@ -209,7 +209,9 @@
 
   <!-- JavaScript App Logic -->
   <script src="app.js"></script>
-    <script>
+
+  <!-- Kiritish maydonlarini tekshirish -->
+  <script>
     // Ism: faqat harflar, bo'shliq va ' ʻ ’ - . belgilari
     document.getElementById('inputName').addEventListener('input', function () {
       this.value = this.value.replace(/[^\p{L}\s'ʻʼ’`.\-]/gu, '');
