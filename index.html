@@ -209,5 +209,28 @@
 
   <!-- JavaScript App Logic -->
   <script src="app.js"></script>
+    <script>
+    // Ism: faqat harflar, bo'shliq va ' ʻ ’ - . belgilari
+    document.getElementById('inputName').addEventListener('input', function () {
+      this.value = this.value.replace(/[^\p{L}\s'ʻʼ’`.\-]/gu, '');
+    });
+
+    // Telefon: faqat raqam, +, bo'shliq, -, ( )
+    var phone = document.getElementById('inputPhone');
+    phone.setAttribute('maxlength', '17');
+    phone.setAttribute('inputmode', 'tel');
+    phone.addEventListener('input', function () {
+      this.value = this.value.replace(/[^0-9+\s\-()]/g, '');
+    });
+
+    // Summa maydonlari: e, +, -, nuqta va vergulni bloklash
+    ['inputDebt', 'paymentAmount'].forEach(function (id) {
+      var el = document.getElementById(id);
+      el.setAttribute('inputmode', 'numeric');
+      el.addEventListener('keydown', function (e) {
+        if (['e', 'E', '+', '-', '.', ','].indexOf(e.key) !== -1) e.preventDefault();
+      });
+    });
+  </script>
 </body>
 </html>
