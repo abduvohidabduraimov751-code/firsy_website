@@ -9,5 +9,9 @@ const firebaseConfig = {
 };
 
 // Firebase'ni ishga tushirish
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+if (typeof firebase !== 'undefined' && !firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
+}
+const db = typeof firebase !== 'undefined' && firebase.firestore ? firebase.firestore() : null;
+const auth = typeof firebase !== 'undefined' && firebase.auth ? firebase.auth() : null;
+
